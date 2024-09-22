@@ -93,6 +93,8 @@
         const fileName = baseNameMatch ? baseNameMatch[1] : 'extracted_links'; // Default name if not found
 
         // Convert links array to string with line breaks
+        links.unshift(`=== $|{fileName}`)
+        links.push("===")
         let linksText = links.join("\n");
 
         // Create a Blob with the links
