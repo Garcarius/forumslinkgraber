@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Extract All Posted Links 
 // @namespace    http://tampermonkey.net/
-// @version      1.7
-// @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects.
+// @version      1.8
+// @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects, targeting only post content and ignoring the signature section.
 // @author       Garcarius
 // @match        *://*/*
 // @grant        none
@@ -42,39 +42,43 @@
 
     // Event listener for button click
     button.addEventListener('click', function() {
-        // Collect all links, including those in embedded videos
+        // Collect all links from post content, ignoring signatures
         let links = [];
-        document.querySelectorAll('a[href], iframe[src]').forEach(link => {
-            let href = link.href || link.src;  // Use 'href' for <a> and 'src' for <iframe>
+        document.querySelectorAll('.message-userContent').forEach(content => {
+            // Exclude any links that are within the .message-signature section
+            const signature = content.closest('.message-main').querySelector('.message-signature');
+            const postLinks = Array.from(content.querySelectorAll('a[href]')).filter(link => {
+                return !(signature && signature.contains(link)); // Exclude links in the signature
+            });
 
-            // Check if the link contains a redirect confirmation
-            if (href && href.includes('goto/link-confirmation?url=')) {
-                // Extract and decode the actual URL from the Base64-encoded parameter
-                const encodedUrl = new URL(href).searchParams.get('url');
-                const decodedUrl = decodeBase64Url(encodedUrl);
+            postLinks.forEach(link => {
+                let href = link.href;
 
-                if (decodedUrl) {
-                    href = decodedUrl; // Use the decoded URL
+                // Check if the link contains a redirect confirmation
+                if (href && href.includes('goto/link-confirmation?url=')) {
+                    // Extract and decode the actual URL from the Base64-encoded parameter
+                    const encodedUrl = new URL(href).searchParams.get('url');
+                    const decodedUrl = decodeBase64Url(encodedUrl);
+
+                    if (decodedUrl) {
+                        href = decodedUrl; // Use the decoded URL
+                    }
                 }
-            }
 
-            // Exclude unwanted links (badges, reactions, comments, posts, etc.)
-            if (href &&
-                href.includes('http') &&  // Ensure it's a full URL
-                !link.closest('.badge') &&   // Ignore badges
-                !link.closest('.reaction') && // Ignore reactions
-                !link.closest('.bookmark') && // Ignore bookmarks
-                !link.closest('.comment') &&  // Ignore comments
-                !href.includes('thread') &&   // Ignore post/thread links
-                !href.includes('member') &&   // Ignore member/profile links
-                !href.includes('comments') &&  // Ignore comment links
-                !href.includes('posts') &&    // Ignore post links
-                !href.includes('energizeio.com') &&    // Ignore post links
-                !href.includes('theporndude.com') &&    // Ignore post links
-                !href.includes('simpcity.su')) {  // Ignore links containing 'page.su'
+                // Exclude unwanted links (e.g., user profiles, thread links, etc.)
+                if (href &&
+                    href.includes('http') && // Ensure it's a full URL
+                    !href.includes('thread') && // Ignore post/thread links
+                    !href.includes('member') && // Ignore member/profile links
+                    !href.includes('comments') && // Ignore comment links
+                    !href.includes('posts') && // Ignore post links
+                    !href.includes('energizeio.com') && // Ignore specific domains
+                    !href.includes('theporndude.com') &&
+                    !href.includes('simpcity.su')) {
 
-                links.push(href);  // Add valid links to the list
-            }
+                    links.push(href); // Add valid links to the list
+                }
+            });
         });
 
         // Check if any links are found
@@ -86,9 +90,11 @@
         // Get the current URL and extract the base name after 'threads/'
         const currentURL = window.location.href;
         const baseNameMatch = currentURL.match(/threads\/([^\/]+)/); // Capture anything after 'threads/'
-        const fileName = baseNameMatch ? baseNameMatch[1] : 'extracted_links';  // Default name if not found
+        const fileName = baseNameMatch ? baseNameMatch[1] : 'extracted_links'; // Default name if not found
 
         // Convert links array to string with line breaks
+        links.unshift(`=== $|{fileName}`)
+        links.push("===")
         let linksText = links.join("\n");
 
         // Create a Blob with the links
@@ -97,7 +103,7 @@
         // Create a temporary link to trigger the download
         let tempLink = document.createElement('a');
         tempLink.href = URL.createObjectURL(blob);
-        tempLink.download = `${fileName}.txt`;  // Use extracted base name
+        tempLink.download = `${fileName}.txt`; // Use extracted base name
         document.body.appendChild(tempLink);
         tempLink.click();
         document.body.removeChild(tempLink);
