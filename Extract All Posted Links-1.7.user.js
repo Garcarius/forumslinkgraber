@@ -4,7 +4,7 @@
 // @version      1.8
 // @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects, targeting only post content and ignoring the signature section.
 // @author       Garcarius
-// @match        *://*/*
+// @match        http*://simpcity.su/*
 // @grant        none
 // ==/UserScript==
 
