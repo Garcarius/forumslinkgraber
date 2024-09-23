@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Extract All Posted Links 
+// @name         Extract All Posted Links on simpcity threads
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects, targeting only post content and ignoring the signature section.
 // @author       Garcarius
 // @match        http*://simpcity.su/*
