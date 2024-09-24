@@ -2,8 +2,8 @@
 // @name         Extract All Posted Links v1.9
 // @namespace    http://tampermonkey.net/
 // @version      1.9
-// @updateURL    https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.9.user.js
-// @downloadURL  https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.9.user.js
+// @updateURL    https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.7.user.js
+// @downloadURL  https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.7.user.js
 // @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI.
 // @author       Garcarius
 // @match        https://simpcity.su/threads/*
