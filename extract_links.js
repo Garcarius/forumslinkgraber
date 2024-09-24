@@ -283,6 +283,9 @@
             }
         });
 
+        // Remove duplicate links
+        links = [...new Set(links)];
+
         // Check if any links are found
         if (links.length === 0) {
             showToast('No relevant links found!', 4000);
