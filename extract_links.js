@@ -267,26 +267,18 @@
             }
 
             // Exclude unwanted links (badges, reactions, comments, posts, etc.)
-            if (href &&
-                href.includes('http') && // Ensure it's a full URL
-                !link.closest('.badge') && // Ignore badges
-                !link.closest('.reaction') && // Ignore reactions
-                !link.closest('.bookmark') && // Ignore bookmarks
-                !link.closest('.comment') && // Ignore comments
-                !href.includes('thread') && // Ignore post/thread links
-                !href.includes('member') && // Ignore member/profile links
-                !href.includes('comments') && // Ignore comment links
-                !href.includes('posts') && // Ignore post links
-                !href.includes('energizeio.com') && // Ignore specific unwanted domains
-                !href.includes('theporndude.com') &&
-                !href.includes('onlyfans.com') &&
-                !href.includes('instagram.com') &&
-                !href.includes('reddit.com') &&
-                !href.includes('tiktok.com') &&
-                !href.includes('youtube.com') &&
-                !href.includes('simpcity.su')) { // Ignore links containing 'simpcity.su'
+            let excludeTerms = ['thread', 'member', 'comments', 'posts', 'adglare.net',
+                'energizeio.com', 'theporndude.com', 'onlyfans.com',
+                'instagram.com', 'reddit.com', 'tiktok.com',
+                'youtube.com', 'simpcity.su'];
+            let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
-                links.push(href); // Add valid links to the list
+            if (href && href.includes('http')) {
+                let isValid = excludeTerms.every(term => !href.includes(term)) && siteTerms.every(term => !link.closest(term));
+
+                if (isValid) {
+                    links.push(href); // Add valid links to the list
+                }
             }
         });
 
