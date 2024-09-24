@@ -108,7 +108,7 @@
     ignoreHistoryCheckbox.type = 'checkbox';
     ignoreHistoryCheckbox.id = 'ignore-history';
     ignoreHistoryCheckbox.name = 'ignore-history';
-    ignoreHistoryCheckbox.checked = false; // Default to not ignoring history
+    ignoreHistoryCheckbox.checked = true; // Default to not ignoring history
 
     let ignoreHistoryLabel = document.createElement('label');
     ignoreHistoryLabel.htmlFor = 'ignore-history';
