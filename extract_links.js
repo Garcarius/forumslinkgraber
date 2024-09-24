@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Extract All Posted Links v2.0
+// @name         Extract All Posted Links v2.1
 // @namespace    http://tampermonkey.net/
 // @version      2.1
-// @updateURL    https://raw.githubusercontent.com/NTFSvolume/forumslinkgraber/refs/heads/main/extract_links.js
-// @downloadURL  https://raw.githubusercontent.com/NTFSvolume/forumslinkgraber/refs/heads/main/extract_links.js
+// @updateURL    https://github.com/NTFSvolume/forumslinkgraber/raw/main/extract_links.js
+// @downloadURL  https://github.com/NTFSvolume/forumslinkgraber/raw/main/extract_links.js
 // @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI and local storage support to avoid duplicates.
 // @author       Garcarius, neolith, NTFSvolume
 // @match        https://simpcity.su/threads/*
@@ -40,7 +40,7 @@
     button.style.cursor = 'pointer';
     button.style.marginBottom = '15px';
     button.style.width = '100%';
-    button.style.fontSize = '16px';
+    button.style.fontSize = '14px';
     button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
     button.style.transition = 'background-color 0.3s ease';
 
@@ -56,14 +56,14 @@
     let optionsContainer = document.createElement('div');
     optionsContainer.style.display = 'flex';
     optionsContainer.style.flexDirection = 'column';
-    optionsContainer.style.gap = '10px';
+    optionsContainer.style.gap = '5px';
 
     // Function to create individual option rows
     function createOptionRow(content) {
         let row = document.createElement('div');
         row.style.display = 'flex';
         row.style.alignItems = 'center';
-        row.style.gap = '10px'; // Increased gap for better spacing
+        row.style.gap = '5px'; // Increased gap for better spacing
         return row;
     }
 
@@ -159,6 +159,23 @@
 
     // Append container to the body
     document.body.appendChild(container);
+
+    // Assuming the div has a class 'myDivClass'
+    let div = document.querySelector('.p-nav');
+
+    // Function to position the button below the div
+    function positionButtonBelowDiv() {
+        let divHeight = div.offsetHeight;
+        let divTop = div.getBoundingClientRect().top;
+        container.style.top = (divTop + divHeight + 10) + 'px'; // 10px margin below the div
+    }
+
+    // Initial positioning
+    positionButtonBelowDiv();
+
+    // Reposition the button when the window is resized or scrolled
+    window.addEventListener('resize', positionButtonBelowDiv);
+    window.addEventListener('scroll', positionButtonBelowDiv);
 
     // Create the toast notification container
     let toastContainer = document.createElement('div');
