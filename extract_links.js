@@ -89,7 +89,7 @@
     copyOption.id = 'action-copy';
     copyOption.name = 'extract-action';
     copyOption.value = 'copy';
- 
+
 
     let copyLabel = document.createElement('label');
     copyLabel.htmlFor = 'action-copy';
@@ -304,7 +304,7 @@
             // Exclude unwanted links (badges, reactions, comments, posts, etc.)
             let excludeTerms = ['thread', 'member', 'comments', 'posts', 'adglare.net',
                 'energizeio.com', 'theporndude.com', 'onlyfans.com',
-                'instagram.com', 'reddit.com', 'tiktok.com',
+                'instagram.com', 'reddit.com', 'tiktok.com', 'xenforo.com', 'xentr.net',
                 'socialmediagirls.com', 'youtube.com', 'simpcity.su'];
             let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
@@ -327,7 +327,7 @@
         }
 
         // Determine if history should be used
-        let sortLinks= sortLinksCheckbox.checked
+        let sortLinks = sortLinksCheckbox.checked
         let ignoreHistory = ignoreHistoryCheckbox.checked;
         let useStorage = !ignoreHistory;
         let storedUrls = useStorage ? getStoredUrls() : [];
