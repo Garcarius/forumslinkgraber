@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name         Extract All Posted Links v1.9
+// @name         Extract All Posted Links v2.0
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.0
 // @updateURL    https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.7.user.js
 // @downloadURL  https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.7.user.js
-// @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI.
-// @author       Garcarius
+// @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI and local storage support to avoid duplicates.
+// @author       Garcarius, neolith
 // @match        https://simpcity.su/threads/*
 // @grant        none
 // ==/UserScript==
@@ -19,32 +19,56 @@
     container.style.top = '10px';
     container.style.right = '10px';
     container.style.zIndex = 1000;
-    container.style.padding = '10px';
+    container.style.padding = '15px';
     container.style.backgroundColor = 'rgba(64, 181, 200, 0.95)';
     container.style.borderRadius = '8px';
-    container.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+    container.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
     container.style.color = 'white';
     container.style.fontFamily = 'Arial, sans-serif';
     container.style.fontSize = '14px';
+    container.style.width = '300px'; // Increased width from 250px to 300px
 
     // Create the Extract Links button
     let button = document.createElement('button');
     button.innerHTML = 'Extract Links';
-    button.style.padding = '8px 12px';
+    button.style.padding = '10px 15px';
     button.style.backgroundColor = '#40b5c8';
     button.style.color = 'white';
     button.style.border = 'none';
     button.style.borderRadius = '5px';
     button.style.cursor = 'pointer';
-    button.style.marginBottom = '10px';
+    button.style.marginBottom = '15px';
     button.style.width = '100%';
     button.style.fontSize = '16px';
+    button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+    button.style.transition = 'background-color 0.3s ease';
+
+    // Button hover effect
+    button.addEventListener('mouseover', () => {
+        button.style.backgroundColor = '#2a9aa3';
+    });
+    button.addEventListener('mouseout', () => {
+        button.style.backgroundColor = '#40b5c8';
+    });
 
     // Create the option container
     let optionsContainer = document.createElement('div');
-    optionsContainer.style.marginTop = '10px';
+    optionsContainer.style.display = 'flex';
+    optionsContainer.style.flexDirection = 'column';
+    optionsContainer.style.gap = '10px';
+
+    // Function to create individual option rows
+    function createOptionRow(content) {
+        let row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '10px'; // Increased gap for better spacing
+        return row;
+    }
 
     // Create the radio buttons for action selection
+    let actionRow = createOptionRow();
+
     let downloadOption = document.createElement('input');
     downloadOption.type = 'radio';
     downloadOption.id = 'action-download';
@@ -54,31 +78,59 @@
 
     let downloadLabel = document.createElement('label');
     downloadLabel.htmlFor = 'action-download';
-    downloadLabel.textContent = ' Download as file';
+    downloadLabel.textContent = 'Download as file';
+    downloadLabel.style.cursor = 'pointer';
+    downloadLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
 
     let copyOption = document.createElement('input');
     copyOption.type = 'radio';
     copyOption.id = 'action-copy';
     copyOption.name = 'extract-action';
     copyOption.value = 'copy';
-    copyOption.style.marginLeft = '10px';
 
     let copyLabel = document.createElement('label');
     copyLabel.htmlFor = 'action-copy';
-    copyLabel.textContent = ' Copy to clipboard';
+    copyLabel.textContent = 'Copy to clipboard';
+    copyLabel.style.cursor = 'pointer';
+    copyLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
+
+    // Append radio buttons and labels to the action row
+    actionRow.appendChild(downloadOption);
+    actionRow.appendChild(downloadLabel);
+    actionRow.appendChild(copyOption);
+    actionRow.appendChild(copyLabel);
+
+    // Create the Ignore History option
+    let ignoreHistoryRow = createOptionRow();
+
+    let ignoreHistoryCheckbox = document.createElement('input');
+    ignoreHistoryCheckbox.type = 'checkbox';
+    ignoreHistoryCheckbox.id = 'ignore-history';
+    ignoreHistoryCheckbox.name = 'ignore-history';
+    ignoreHistoryCheckbox.checked = false; // Default to not ignoring history
+
+    let ignoreHistoryLabel = document.createElement('label');
+    ignoreHistoryLabel.htmlFor = 'ignore-history';
+    ignoreHistoryLabel.textContent = 'Ignore History';
+    ignoreHistoryLabel.style.cursor = 'pointer';
+    ignoreHistoryLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
+
+    // Append checkbox and label to the ignore history row
+    ignoreHistoryRow.appendChild(ignoreHistoryCheckbox);
+    ignoreHistoryRow.appendChild(ignoreHistoryLabel);
 
     // Create the separator selection
-    let separatorContainer = document.createElement('div');
-    separatorContainer.style.marginTop = '10px';
-    separatorContainer.style.display = 'none'; // Hidden by default
+    let separatorRow = createOptionRow();
+    separatorRow.style.display = 'none'; // Hidden by default
 
     let separatorLabel = document.createElement('label');
-    separatorLabel.textContent = ' Separator: ';
-    separatorLabel.style.marginRight = '5px';
+    separatorLabel.textContent = 'Separator:';
+    separatorLabel.style.flex = '0 0 auto';
+    separatorLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
 
     let separatorSelect = document.createElement('select');
     separatorSelect.id = 'separator-select';
-    separatorSelect.style.marginLeft = '5px';
+    separatorSelect.style.flex = '1';
 
     let optionSpace = document.createElement('option');
     optionSpace.value = ' ';
@@ -91,16 +143,14 @@
     separatorSelect.appendChild(optionSpace);
     separatorSelect.appendChild(optionNewline);
 
-    // Assemble the separator container
-    separatorContainer.appendChild(separatorLabel);
-    separatorContainer.appendChild(separatorSelect);
+    // Append label and select to the separator row
+    separatorRow.appendChild(separatorLabel);
+    separatorRow.appendChild(separatorSelect);
 
-    // Assemble the options
-    optionsContainer.appendChild(downloadOption);
-    optionsContainer.appendChild(downloadLabel);
-    optionsContainer.appendChild(copyOption);
-    optionsContainer.appendChild(copyLabel);
-    optionsContainer.appendChild(separatorContainer);
+    // Assemble the options container
+    optionsContainer.appendChild(actionRow);
+    optionsContainer.appendChild(ignoreHistoryRow);
+    optionsContainer.appendChild(separatorRow);
 
     // Append button and options to the container
     container.appendChild(button);
@@ -132,6 +182,8 @@
         toast.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
         toast.style.opacity = '0';
         toast.style.transition = 'opacity 0.5s ease';
+        toast.style.fontSize = '14px';
+        toast.style.maxWidth = '300px';
 
         toastContainer.appendChild(toast);
 
@@ -170,13 +222,24 @@
         });
     }
 
+    // Function to get stored URLs from localStorage
+    function getStoredUrls() {
+        let stored = localStorage.getItem('extractedLinks');
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    // Function to save URLs to localStorage
+    function saveStoredUrls(urls) {
+        localStorage.setItem('extractedLinks', JSON.stringify(urls));
+    }
+
     // Event listener to toggle separator selection visibility
     document.querySelectorAll('input[name="extract-action"]').forEach(radio => {
         radio.addEventListener('change', function() {
             if (copyOption.checked) {
-                separatorContainer.style.display = 'block';
+                separatorRow.style.display = 'flex';
             } else {
-                separatorContainer.style.display = 'none';
+                separatorRow.style.display = 'none';
             }
         });
     });
@@ -233,6 +296,26 @@
             return;
         }
 
+        // Determine if history should be used
+        let ignoreHistory = ignoreHistoryCheckbox.checked;
+        let useStorage = !ignoreHistory;
+        let storedUrls = useStorage ? getStoredUrls() : [];
+
+        // Filter out already stored URLs if storage is enabled
+        if (useStorage) {
+            links = links.filter(link => !storedUrls.includes(link));
+        }
+
+        // After filtering, check if any links remain
+        if (links.length === 0) {
+            if (useStorage) {
+                showToast('No new links found!', 4000);
+            } else {
+                showToast('No links found!', 4000);
+            }
+            return;
+        }
+
         // Determine the selected action
         let selectedAction = document.querySelector('input[name="extract-action"]:checked').value;
         let separator = separatorSelect.value;
@@ -263,6 +346,12 @@
             document.body.removeChild(tempLink);
 
             showToast('Links downloaded as file!');
+        }
+
+        // Save the new links to localStorage if enabled
+        if (useStorage) {
+            let updatedStoredUrls = storedUrls.concat(links);
+            saveStoredUrls(updatedStoredUrls);
         }
     });
 
