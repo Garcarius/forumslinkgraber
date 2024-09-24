@@ -158,8 +158,10 @@
     optionNewline.value = '\n';
     optionNewline.textContent = 'New Line';
 
-    separatorSelect.appendChild(optionSpace);
     separatorSelect.appendChild(optionNewline);
+    separatorSelect.appendChild(optionSpace);
+    separatorSelect.value = '\n'
+
 
     // Append label and select to the separator row
     separatorRow.appendChild(separatorLabel);
@@ -177,22 +179,22 @@
     // Append container to the body
     document.body.appendChild(container);
 
-    // Assuming the div has a class 'myDivClass'
-    let div = document.querySelector('.p-nav');
+    // Get navigation bar 
+    let navBar = document.querySelector('.p-nav');
 
-    // Function to position the button below the div
-    function positionButtonBelowDiv() {
-        let divHeight = div.offsetHeight;
-        let divTop = div.getBoundingClientRect().top;
-        container.style.top = (divTop + divHeight + 10) + 'px'; // 10px margin below the div
+    // Function to position the button below the navBar
+    function positionButtonBelowNavBar() {
+        let navBarHeight = navBar.offsetHeight;
+        let navBarTop = navBar.getBoundingClientRect().top;
+        container.style.top = (navBarTop + navBarHeight + 10) + 'px'; // 10px margin below the navBar
     }
 
     // Initial positioning
-    positionButtonBelowDiv();
+    positionButtonBelowNavBar();
 
     // Reposition the button when the window is resized or scrolled
-    window.addEventListener('resize', positionButtonBelowDiv);
-    window.addEventListener('scroll', positionButtonBelowDiv);
+    window.addEventListener('resize', positionButtonBelowNavBar);
+    window.addEventListener('scroll', positionButtonBelowNavBar);
 
     // Create the toast notification container
     let toastContainer = document.createElement('div');
