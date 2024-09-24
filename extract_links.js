@@ -10,7 +10,7 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     // Create a container for the button and options
@@ -203,7 +203,7 @@
     // Function to decode Base64 encoded URLs
     function decodeBase64Url(base64String) {
         try {
-            return decodeURIComponent(atob(base64String).split('').map(function(c) {
+            return decodeURIComponent(atob(base64String).split('').map(function (c) {
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
             }).join(''));
         } catch (e) {
@@ -214,9 +214,9 @@
 
     // Function to copy text to clipboard
     function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(function() {
+        navigator.clipboard.writeText(text).then(function () {
             showToast('Links copied to clipboard!');
-        }, function(err) {
+        }, function (err) {
             console.error('Could not copy text: ', err);
             showToast('Failed to copy links to clipboard.', 5000);
         });
@@ -235,7 +235,7 @@
 
     // Event listener to toggle separator selection visibility
     document.querySelectorAll('input[name="extract-action"]').forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', function () {
             if (copyOption.checked) {
                 separatorRow.style.display = 'flex';
             } else {
@@ -245,11 +245,11 @@
     });
 
     // Event listener for button click
-    button.addEventListener('click', function() {
+    button.addEventListener('click', function () {
         // Collect all links, including those in embedded videos
         let links = [];
         document.querySelectorAll('a[href], iframe[src]').forEach(link => {
-            let href = link.href || link.src;  // Use 'href' for <a> and 'src' for <iframe>
+            let href = link.href || link.src; // Use 'href' for <a> and 'src' for <iframe>
 
             // Check if the link contains a redirect confirmation
             if (href && href.includes('goto/link-confirmation?url=')) {
@@ -268,25 +268,25 @@
 
             // Exclude unwanted links (badges, reactions, comments, posts, etc.)
             if (href &&
-                href.includes('http') &&  // Ensure it's a full URL
-                !link.closest('.badge') &&   // Ignore badges
+                href.includes('http') && // Ensure it's a full URL
+                !link.closest('.badge') && // Ignore badges
                 !link.closest('.reaction') && // Ignore reactions
                 !link.closest('.bookmark') && // Ignore bookmarks
-                !link.closest('.comment') &&  // Ignore comments
-                !href.includes('thread') &&   // Ignore post/thread links
-                !href.includes('member') &&   // Ignore member/profile links
-                !href.includes('comments') &&  // Ignore comment links
-                !href.includes('posts') &&    // Ignore post links
-                !href.includes('energizeio.com') &&    // Ignore specific unwanted domains
+                !link.closest('.comment') && // Ignore comments
+                !href.includes('thread') && // Ignore post/thread links
+                !href.includes('member') && // Ignore member/profile links
+                !href.includes('comments') && // Ignore comment links
+                !href.includes('posts') && // Ignore post links
+                !href.includes('energizeio.com') && // Ignore specific unwanted domains
                 !href.includes('theporndude.com') &&
                 !href.includes('onlyfans.com') &&
                 !href.includes('instagram.com') &&
                 !href.includes('reddit.com') &&
                 !href.includes('tiktok.com') &&
                 !href.includes('youtube.com') &&
-                !href.includes('simpcity.su')) {  // Ignore links containing 'simpcity.su'
+                !href.includes('simpcity.su')) { // Ignore links containing 'simpcity.su'
 
-                links.push(href);  // Add valid links to the list
+                links.push(href); // Add valid links to the list
             }
         });
 
@@ -329,7 +329,7 @@
             // Get the current URL and extract the base name after 'threads/'
             const currentURL = window.location.href;
             const baseNameMatch = currentURL.match(/threads\/([^\/]+)/); // Capture anything after 'threads/'
-            const fileName = baseNameMatch ? baseNameMatch[1] : 'extracted_links';  // Default name if not found
+            const fileName = baseNameMatch ? baseNameMatch[1] : 'extracted_links'; // Default name if not found
 
             // Convert links array to string with line breaks
             let linksText = links.join("\n");
@@ -340,7 +340,7 @@
             // Create a temporary link to trigger the download
             let tempLink = document.createElement('a');
             tempLink.href = URL.createObjectURL(blob);
-            tempLink.download = `${fileName}.txt`;  // Use extracted base name
+            tempLink.download = `${fileName}.txt`; // Use extracted base name
             document.body.appendChild(tempLink);
             tempLink.click();
             document.body.removeChild(tempLink);
