@@ -82,12 +82,14 @@
     downloadLabel.textContent = 'Download as file';
     downloadLabel.style.cursor = 'pointer';
     downloadLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
+    downloadLabel.style.flexBasis = '120px'; // Set a fixed width to ensure alignment
 
     let copyOption = document.createElement('input');
     copyOption.type = 'radio';
     copyOption.id = 'action-copy';
     copyOption.name = 'extract-action';
     copyOption.value = 'copy';
+ 
 
     let copyLabel = document.createElement('label');
     copyLabel.htmlFor = 'action-copy';
@@ -108,17 +110,32 @@
     ignoreHistoryCheckbox.type = 'checkbox';
     ignoreHistoryCheckbox.id = 'ignore-history';
     ignoreHistoryCheckbox.name = 'ignore-history';
-    ignoreHistoryCheckbox.checked = true; // Default to not ignoring history
+    ignoreHistoryCheckbox.checked = true; // Default to ignoring history
 
     let ignoreHistoryLabel = document.createElement('label');
     ignoreHistoryLabel.htmlFor = 'ignore-history';
     ignoreHistoryLabel.textContent = 'Ignore History';
     ignoreHistoryLabel.style.cursor = 'pointer';
     ignoreHistoryLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
+    ignoreHistoryLabel.style.flexBasis = '120px'; // Set a fixed width to ensure alignment
+
+    let sortLinksCheckbox = document.createElement('input');
+    sortLinksCheckbox.type = 'checkbox';
+    sortLinksCheckbox.id = 'sort-links';
+    sortLinksCheckbox.name = 'sort-links';
+    sortLinksCheckbox.checked = true; // Defaults to sort links
+
+    let sortLinksLabel = document.createElement('label');
+    sortLinksLabel.htmlFor = 'sort-links';
+    sortLinksLabel.textContent = 'Sort Links';
+    sortLinksLabel.style.cursor = 'pointer';
+    sortLinksLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
 
     // Append checkbox and label to the ignore history row
     ignoreHistoryRow.appendChild(ignoreHistoryCheckbox);
     ignoreHistoryRow.appendChild(ignoreHistoryLabel);
+    ignoreHistoryRow.appendChild(sortLinksCheckbox);
+    ignoreHistoryRow.appendChild(sortLinksLabel);
 
     // Create the separator selection
     let separatorRow = createOptionRow();
@@ -310,6 +327,7 @@
         }
 
         // Determine if history should be used
+        let sortLinks= sortLinksCheckbox.checked
         let ignoreHistory = ignoreHistoryCheckbox.checked;
         let useStorage = !ignoreHistory;
         let storedUrls = useStorage ? getStoredUrls() : [];
@@ -317,6 +335,9 @@
         // Filter out already stored URLs if storage is enabled
         if (useStorage) {
             links = links.filter(link => !storedUrls.includes(link));
+        }
+        if (sortLinks) {
+            links = links.sort();
         }
 
         // After filtering, check if any links remain
