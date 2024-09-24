@@ -7,6 +7,7 @@
 // @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI and local storage support to avoid duplicates.
 // @author       Garcarius, neolith, NTFSvolume
 // @match        https://simpcity.su/threads/*
+// @match        https://forums.socialmediagirls.com/threads/*
 // @grant        none
 // ==/UserScript==
 
@@ -270,7 +271,7 @@
             let excludeTerms = ['thread', 'member', 'comments', 'posts', 'adglare.net',
                 'energizeio.com', 'theporndude.com', 'onlyfans.com',
                 'instagram.com', 'reddit.com', 'tiktok.com',
-                'youtube.com', 'simpcity.su'];
+                'socialmediagirls.com', 'youtube.com', 'simpcity.su'];
             let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
             if (href && href.includes('http')) {
