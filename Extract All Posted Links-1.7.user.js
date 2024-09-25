@@ -354,6 +354,7 @@
                 !href.includes('instagram.com') &&
                 !href.includes('reddit.com') &&
                 !href.includes('tiktok.com') &&
+                !href.includes('adtng') &&
                 !href.includes('youtube.com') &&
                 !href.includes('simpcity.su')) {  // Ignore links containing 'simpcity.su'
 
