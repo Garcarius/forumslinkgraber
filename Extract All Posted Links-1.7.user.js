@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name         Extract All Posted Links v2.0
+// @name         Extract All Posted Links v2.1
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @updateURL    https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.7.user.js
 // @downloadURL  https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.7.user.js
-// @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI and local storage support to avoid duplicates.
+// @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI and local storage support to avoid duplicates. Added persistence for user settings.
 // @author       Garcarius, neolith
 // @match        https://simpcity.su/threads/*
 // @grant        none
@@ -12,6 +12,25 @@
 
 (function() {
     'use strict';
+
+    // Define a namespace for localStorage keys to avoid collisions
+    const STORAGE_KEYS = {
+        ACTION: 'extractAllLinksV2_action',
+        IGNORE_HISTORY: 'extractAllLinksV2_ignoreHistory',
+        SEPARATOR: 'extractAllLinksV2_separator',
+        LINKS: 'extractedLinks'
+    };
+
+    // Helper function to get a value from localStorage
+    function getStoredValue(key, defaultValue) {
+        const stored = localStorage.getItem(key);
+        return stored !== null ? JSON.parse(stored) : defaultValue;
+    }
+
+    // Helper function to set a value in localStorage
+    function setStoredValue(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
 
     // Create a container for the button and options
     let container = document.createElement('div');
@@ -74,7 +93,6 @@
     downloadOption.id = 'action-download';
     downloadOption.name = 'extract-action';
     downloadOption.value = 'download';
-    downloadOption.checked = true;
 
     let downloadLabel = document.createElement('label');
     downloadLabel.htmlFor = 'action-download';
@@ -107,7 +125,6 @@
     ignoreHistoryCheckbox.type = 'checkbox';
     ignoreHistoryCheckbox.id = 'ignore-history';
     ignoreHistoryCheckbox.name = 'ignore-history';
-    ignoreHistoryCheckbox.checked = false; // Default to not ignoring history
 
     let ignoreHistoryLabel = document.createElement('label');
     ignoreHistoryLabel.htmlFor = 'ignore-history';
@@ -224,16 +241,59 @@
 
     // Function to get stored URLs from localStorage
     function getStoredUrls() {
-        let stored = localStorage.getItem('extractedLinks');
+        let stored = localStorage.getItem(STORAGE_KEYS.LINKS);
         return stored ? JSON.parse(stored) : [];
     }
 
     // Function to save URLs to localStorage
     function saveStoredUrls(urls) {
-        localStorage.setItem('extractedLinks', JSON.stringify(urls));
+        localStorage.setItem(STORAGE_KEYS.LINKS, JSON.stringify(urls));
     }
 
-    // Event listener to toggle separator selection visibility
+    // Function to load user settings from localStorage
+    function loadSettings() {
+        // Load Action Selection
+        const storedAction = getStoredValue(STORAGE_KEYS.ACTION, 'download');
+        if (storedAction === 'download') {
+            downloadOption.checked = true;
+            separatorRow.style.display = 'none';
+        } else if (storedAction === 'copy') {
+            copyOption.checked = true;
+            separatorRow.style.display = 'flex';
+        }
+
+        // Load Ignore History
+        const storedIgnoreHistory = getStoredValue(STORAGE_KEYS.IGNORE_HISTORY, false);
+        ignoreHistoryCheckbox.checked = storedIgnoreHistory;
+
+        // Load Separator
+        const storedSeparator = getStoredValue(STORAGE_KEYS.SEPARATOR, '\n');
+        if (storedSeparator === ' ') {
+            separatorSelect.value = ' ';
+        } else {
+            separatorSelect.value = '\n';
+        }
+    }
+
+    // Function to save user settings to localStorage
+    function saveSettings() {
+        // Save Action Selection
+        const selectedAction = document.querySelector('input[name="extract-action"]:checked').value;
+        setStoredValue(STORAGE_KEYS.ACTION, selectedAction);
+
+        // Save Ignore History
+        const ignoreHistory = ignoreHistoryCheckbox.checked;
+        setStoredValue(STORAGE_KEYS.IGNORE_HISTORY, ignoreHistory);
+
+        // Save Separator
+        const separator = separatorSelect.value;
+        setStoredValue(STORAGE_KEYS.SEPARATOR, separator);
+    }
+
+    // Load settings on script initialization
+    loadSettings();
+
+    // Event listener to toggle separator selection visibility and save action selection
     document.querySelectorAll('input[name="extract-action"]').forEach(radio => {
         radio.addEventListener('change', function() {
             if (copyOption.checked) {
@@ -241,7 +301,18 @@
             } else {
                 separatorRow.style.display = 'none';
             }
+            saveSettings(); // Save the selected action
         });
+    });
+
+    // Event listener for Ignore History checkbox change
+    ignoreHistoryCheckbox.addEventListener('change', function() {
+        saveSettings(); // Save the ignore history preference
+    });
+
+    // Event listener for separator selection change
+    separatorSelect.addEventListener('change', function() {
+        saveSettings(); // Save the selected separator
     });
 
     // Event listener for button click
