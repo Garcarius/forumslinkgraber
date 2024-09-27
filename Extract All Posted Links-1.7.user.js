@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Extract All Posted Links v2.1
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @updateURL    https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.7.user.js
 // @downloadURL  https://github.com/Garcarius/forumslinkgraber/raw/main/Extract%20All%20Posted%20Links-1.7.user.js
 // @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI and local storage support to avoid duplicates. Added persistence for user settings.
@@ -354,7 +354,11 @@
                 !href.includes('instagram.com') &&
                 !href.includes('reddit.com') &&
                 !href.includes('tiktok.com') &&
+                !href.includes('x.com') &&
                 !href.includes('adtng') &&
+                !href.includes('chaturbate') &&
+                !href.includes('fansly.com') &&
+                !href.includes('privacy.com.br') &&
                 !href.includes('youtube.com') &&
                 !href.includes('simpcity.su')) {  // Ignore links containing 'simpcity.su'
 
