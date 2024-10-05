@@ -289,9 +289,9 @@
 
             // Exclude unwanted links (badges, reactions, comments, posts, etc.)
             let excludeTerms = ['thread', 'member', 'comments', 'posts', 'adglare.net',
-                'energizeio.com', 'theporndude.com', 'onlyfans.com',
+                'energizeio.com', 'theporndude.com', 'onlyfans.com',"google.com/chrome",
                 'instagram.com', 'reddit.com', 'tiktok.com', 'xenforo.com', 'xentr.net',
-                'socialmediagirls.com', 'youtube.com', 'simpcity.su'];
+                'socialmediagirls.com', 'youtube.com', 'simpcity.su','adtng'];
             let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
             if (href && href.includes('http')) {
@@ -329,7 +329,9 @@
         }
 
         const threadKeys = Object.keys(savedLinks).filter(key => fileName && key.includes(fileName));
-        let threadLinks = threadKeys.map(key => savedLinks[key]);
+        console.log("found ${threadKeys.length} pages");
+        let threadLinks = Object.values(threadKeys.map(key => savedLinks[key])).flat();
+        console.log (threadLinks);
 
         if (threadLinks.length === 0) {
             showToast('No links found!', 4000);
@@ -360,4 +362,4 @@
     });
 
     updateLocalStorage();
-});
+})();
