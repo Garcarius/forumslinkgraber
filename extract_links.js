@@ -15,7 +15,7 @@
 (function () {
     'use strict';
     
-    const pageURL = window.location.href;
+    const pageURL = window.location.href.split('#')[0];
     const pathSegments = window.location.pathname.split('/');  
     const threadsIndex = pathSegments.indexOf("threads");
     const threadName = threadsIndex !== -1 && threadsIndex < pathSegments.length - 1 ? pathSegments[threadsIndex + 1] : "extracted_links";
@@ -88,8 +88,8 @@
     downloadLabel.htmlFor = 'action-download';
     downloadLabel.textContent = 'Download as file';
     downloadLabel.style.cursor = 'pointer';
-    downloadLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
-    downloadLabel.style.flexBasis = '120px'; // Set a fixed width to ensure alignment
+    downloadLabel.style.whiteSpace = 'nowrap';
+    downloadLabel.style.flexBasis = '120px';
 
     let copyOption = document.createElement('input');
     copyOption.type = 'radio';
@@ -102,7 +102,7 @@
     copyLabel.htmlFor = 'action-copy';
     copyLabel.textContent = 'Copy to clipboard';
     copyLabel.style.cursor = 'pointer';
-    copyLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
+    copyLabel.style.whiteSpace = 'nowrap';
 
     // Append radio buttons and labels to the action row
     actionRow.appendChild(downloadOption);
@@ -143,7 +143,7 @@
     optionsRow.appendChild(sortLinksLabel);
 
     let separatorRow = createOptionRow();
-    separatorRow.style.display = 'none'; // Hidden by default
+    separatorRow.style.display = 'none';
 
     let separatorLabel = document.createElement('label');
     separatorLabel.textContent = 'Separator:';
@@ -310,9 +310,8 @@
         savedLinks[pageURL] = links;
 
         localStorage.setItem('saved_links', JSON.stringify(savedLinks));
-        console.log(`Stored ${links.length} links for page: ${pageURL}`);
+        console.log(`Stored ${links.length} links from page: ${pageURL}`);
         console.log('Updated saved_links:', savedLinks);
-    
     }
 
     // Event listener for button click
@@ -352,7 +351,7 @@
             // Create a temporary link to trigger the download
             let tempLink = document.createElement('a');
             tempLink.href = URL.createObjectURL(blob);
-            tempLink.download = `${fileName}.txt`; // Use extracted base name
+            tempLink.download = `${fileName}.txt`;
             document.body.appendChild(tempLink);
             tempLink.click();
             document.body.removeChild(tempLink);
