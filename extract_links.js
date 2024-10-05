@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Extract All Posted Links v2.2
+// @name         Extract All Posted Links
 // @namespace    http://tampermonkey.net/
-// @version      2.2
-// @updateURL    https://github.com/NTFSvolume/forumslinkgraber/raw/main/extract_links.js
-// @downloadURL  https://github.com/NTFSvolume/forumslinkgraber/raw/main/extract_links.js
+// @version      2.3
+// @updateURL    https://github.com/Garcarius/forumslinkgraber/raw/main/extract_links.js
+// @downloadURL  https://github.com/Garcarius/forumslinkgraber/raw/main/extract_links.js
 // @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI and local storage support to avoid duplicates.
 // @author       Garcarius, neolith, NTFSvolume
 // @match        https://simpcity.su/threads/*
@@ -14,9 +14,9 @@
 
 (function () {
     'use strict';
-    
+
     const pageURL = window.location.href.split('#')[0];
-    const pathSegments = window.location.pathname.split('/');  
+    const pathSegments = window.location.pathname.split('/');
     const threadsIndex = pathSegments.indexOf("threads");
     const threadName = threadsIndex !== -1 && threadsIndex < pathSegments.length - 1 ? pathSegments[threadsIndex + 1] : "extracted_links";
     const threadPage = threadsIndex !== -1 && threadsIndex < pathSegments.length - 2 ? pathSegments[threadsIndex + 2] : "";
@@ -116,14 +116,14 @@
     onlyCurrentPageCheckbox.type = 'checkbox';
     onlyCurrentPageCheckbox.id = 'only-current-page';
     onlyCurrentPageCheckbox.name = 'only-current-page';
-    onlyCurrentPageCheckbox.checked = false; 
+    onlyCurrentPageCheckbox.checked = false;
 
     let onlyCurrentPageLabel = document.createElement('label');
     onlyCurrentPageLabel.htmlFor = 'only-current-page';
     onlyCurrentPageLabel.textContent = 'Only Current Page';
     onlyCurrentPageLabel.style.cursor = 'pointer';
-    onlyCurrentPageLabel.style.whiteSpace = 'nowrap'; 
-    onlyCurrentPageLabel.style.flexBasis = '120px'; 
+    onlyCurrentPageLabel.style.whiteSpace = 'nowrap';
+    onlyCurrentPageLabel.style.flexBasis = '120px';
 
     let sortLinksCheckbox = document.createElement('input');
     sortLinksCheckbox.type = 'checkbox';
@@ -289,16 +289,16 @@
 
             // Exclude unwanted links (badges, reactions, comments, posts, etc.)
             let excludeTerms = ['thread', 'member', 'comments', 'posts', 'adglare.net',
-                'energizeio.com', 'theporndude.com', 'onlyfans.com',"google.com/chrome",
+                'energizeio.com', 'theporndude.com', 'onlyfans.com', "google.com/chrome",
                 'instagram.com', 'reddit.com', 'tiktok.com', 'xenforo.com', 'xentr.net',
-                'socialmediagirls.com', 'youtube.com', 'simpcity.su','adtng'];
+                'socialmediagirls.com', 'youtube.com', 'simpcity.su', 'adtng'];
             let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
             if (href && href.includes('http')) {
                 let isValid = excludeTerms.every(term => !href.includes(term)) && siteTerms.every(term => !link.closest(term));
 
                 if (isValid) {
-                    links.push(href); 
+                    links.push(href);
                 }
             }
         });
@@ -331,7 +331,7 @@
         const threadKeys = Object.keys(savedLinks).filter(key => fileName && key.includes(fileName));
         console.log("found ${threadKeys.length} pages");
         let threadLinks = Object.values(threadKeys.map(key => savedLinks[key])).flat();
-        console.log (threadLinks);
+        console.log(threadLinks);
 
         if (threadLinks.length === 0) {
             showToast('No links found!', 4000);
