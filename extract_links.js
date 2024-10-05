@@ -338,6 +338,9 @@
             return;
         }
 
+        // Remove duplicate links accross multiple pages
+        threadLinks = [...new Set(threadLinks)];
+
         if (sortLinks) {
             threadLinks = threadLinks.sort();
         }
