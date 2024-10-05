@@ -9,6 +9,7 @@
 // @match        https://simpcity.su/threads/*
 // @match        https://forums.socialmediagirls.com/threads/*
 // @grant        none
+// @run-at       document-idle   // Wait until the page is fully loaded
 // ==/UserScript==
 
 (function () {
