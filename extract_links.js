@@ -14,6 +14,12 @@
 
 (function () {
     'use strict';
+    
+    const pageURL = window.location.href;
+    const pathSegments = window.location.pathname.split('/');  
+    const threadsIndex = pathSegments.indexOf("threads");
+    const threadName = threadsIndex !== -1 && threadsIndex < pathSegments.length - 1 ? pathSegments[threadsIndex + 1] : "extracted_links";
+    const threadPage = threadsIndex !== -1 && threadsIndex < pathSegments.length - 2 ? pathSegments[threadsIndex + 2] : "";
 
     // Create a container for the button and options
     let container = document.createElement('div');
@@ -104,21 +110,20 @@
     actionRow.appendChild(copyOption);
     actionRow.appendChild(copyLabel);
 
-    // Create the Ignore History option
-    let ignoreHistoryRow = createOptionRow();
+    let optionsRow = createOptionRow();
 
-    let ignoreHistoryCheckbox = document.createElement('input');
-    ignoreHistoryCheckbox.type = 'checkbox';
-    ignoreHistoryCheckbox.id = 'ignore-history';
-    ignoreHistoryCheckbox.name = 'ignore-history';
-    ignoreHistoryCheckbox.checked = true; // Default to ignoring history
+    let onlyCurrentPageCheckbox = document.createElement('input');
+    onlyCurrentPageCheckbox.type = 'checkbox';
+    onlyCurrentPageCheckbox.id = 'only-current-page';
+    onlyCurrentPageCheckbox.name = 'only-current-page';
+    onlyCurrentPageCheckbox.checked = false; 
 
-    let ignoreHistoryLabel = document.createElement('label');
-    ignoreHistoryLabel.htmlFor = 'ignore-history';
-    ignoreHistoryLabel.textContent = 'Ignore History';
-    ignoreHistoryLabel.style.cursor = 'pointer';
-    ignoreHistoryLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
-    ignoreHistoryLabel.style.flexBasis = '120px'; // Set a fixed width to ensure alignment
+    let onlyCurrentPageLabel = document.createElement('label');
+    onlyCurrentPageLabel.htmlFor = 'only-current-page';
+    onlyCurrentPageLabel.textContent = 'Only Current Page';
+    onlyCurrentPageLabel.style.cursor = 'pointer';
+    onlyCurrentPageLabel.style.whiteSpace = 'nowrap'; 
+    onlyCurrentPageLabel.style.flexBasis = '120px'; 
 
     let sortLinksCheckbox = document.createElement('input');
     sortLinksCheckbox.type = 'checkbox';
@@ -130,22 +135,20 @@
     sortLinksLabel.htmlFor = 'sort-links';
     sortLinksLabel.textContent = 'Sort Links';
     sortLinksLabel.style.cursor = 'pointer';
-    sortLinksLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
+    sortLinksLabel.style.whiteSpace = 'nowrap';
 
-    // Append checkbox and label to the ignore history row
-    ignoreHistoryRow.appendChild(ignoreHistoryCheckbox);
-    ignoreHistoryRow.appendChild(ignoreHistoryLabel);
-    ignoreHistoryRow.appendChild(sortLinksCheckbox);
-    ignoreHistoryRow.appendChild(sortLinksLabel);
+    optionsRow.appendChild(onlyCurrentPageCheckbox);
+    optionsRow.appendChild(onlyCurrentPageLabel);
+    optionsRow.appendChild(sortLinksCheckbox);
+    optionsRow.appendChild(sortLinksLabel);
 
-    // Create the separator selection
     let separatorRow = createOptionRow();
     separatorRow.style.display = 'none'; // Hidden by default
 
     let separatorLabel = document.createElement('label');
     separatorLabel.textContent = 'Separator:';
     separatorLabel.style.flex = '0 0 auto';
-    separatorLabel.style.whiteSpace = 'nowrap'; // Prevent label from wrapping
+    separatorLabel.style.whiteSpace = 'nowrap';
 
     let separatorSelect = document.createElement('select');
     separatorSelect.id = 'separator-select';
@@ -163,24 +166,18 @@
     separatorSelect.appendChild(optionSpace);
     separatorSelect.value = '\n'
 
-
-    // Append label and select to the separator row
     separatorRow.appendChild(separatorLabel);
     separatorRow.appendChild(separatorSelect);
 
-    // Assemble the options container
     optionsContainer.appendChild(actionRow);
-    optionsContainer.appendChild(ignoreHistoryRow);
+    optionsContainer.appendChild(optionsRow);
     optionsContainer.appendChild(separatorRow);
 
-    // Append button and options to the container
     container.appendChild(button);
     container.appendChild(optionsContainer);
 
-    // Append container to the body
     document.body.appendChild(container);
 
-    // Get navigation bar 
     let navBar = document.querySelector('.p-nav');
 
     // Function to position the button below the navBar
@@ -190,10 +187,8 @@
         container.style.top = (navBarTop + navBarHeight + 10) + 'px'; // 10px margin below the navBar
     }
 
-    // Initial positioning
     positionButtonBelowNavBar();
 
-    // Reposition the button when the window is resized or scrolled
     window.addEventListener('resize', positionButtonBelowNavBar);
     window.addEventListener('scroll', positionButtonBelowNavBar);
 
@@ -260,17 +255,6 @@
         });
     }
 
-    // Function to get stored URLs from localStorage
-    function getStoredUrls() {
-        let stored = localStorage.getItem('extractedLinks');
-        return stored ? JSON.parse(stored) : [];
-    }
-
-    // Function to save URLs to localStorage
-    function saveStoredUrls(urls) {
-        localStorage.setItem('extractedLinks', JSON.stringify(urls));
-    }
-
     // Event listener to toggle separator selection visibility
     document.querySelectorAll('input[name="extract-action"]').forEach(radio => {
         radio.addEventListener('change', function () {
@@ -282,9 +266,8 @@
         });
     });
 
-    // Event listener for button click
-    button.addEventListener('click', function () {
-        // Collect all links, including those in embedded videos
+
+    function updateLocalStorage() {
         let links = [];
         document.querySelectorAll('a[href], iframe[src]').forEach(link => {
             let href = link.href || link.src; // Use 'href' for <a> and 'src' for <iframe>
@@ -315,7 +298,7 @@
                 let isValid = excludeTerms.every(term => !href.includes(term)) && siteTerms.every(term => !link.closest(term));
 
                 if (isValid) {
-                    links.push(href); // Add valid links to the list
+                    links.push(href); 
                 }
             }
         });
@@ -323,54 +306,46 @@
         // Remove duplicate links
         links = [...new Set(links)];
 
-        // Check if any links are found
-        if (links.length === 0) {
-            showToast('No relevant links found!', 4000);
-            return;
-        }
+        let savedLinks = JSON.parse(localStorage.getItem('saved_links')) || {};
+        savedLinks[pageURL] = links;
 
-        // Determine if history should be used
-        let sortLinks = sortLinksCheckbox.checked
-        let ignoreHistory = ignoreHistoryCheckbox.checked;
-        let useStorage = !ignoreHistory;
-        let storedUrls = useStorage ? getStoredUrls() : [];
+        localStorage.setItem('saved_links', JSON.stringify(savedLinks));
+        console.log(`Stored ${links.length} links for page: ${pageURL}`);
+        console.log('Updated saved_links:', savedLinks);
+    
+    }
 
-        // Filter out already stored URLs if storage is enabled
-        if (useStorage) {
-            links = links.filter(link => !storedUrls.includes(link));
-        }
-        if (sortLinks) {
-            links = links.sort();
-        }
-
-        // After filtering, check if any links remain
-        if (links.length === 0) {
-            if (useStorage) {
-                showToast('No new links found!', 4000);
-            } else {
-                showToast('No links found!', 4000);
-            }
-            return;
-        }
-
+    // Event listener for button click
+    button.addEventListener('click', function () {
+        let savedLinks = JSON.parse(localStorage.getItem('saved_links')) || {};
         // Determine the selected action
         let selectedAction = document.querySelector('input[name="extract-action"]:checked').value;
         let separator = separatorSelect.value;
+        let sortLinks = sortLinksCheckbox.checked
+        let onlyCurrentPage = onlyCurrentPageCheckbox.checked;
+        let fileName = threadName
+
+        if (onlyCurrentPage) {
+            fileName = threadName.concat("/", threadPage);
+        }
+
+        const threadKeys = Object.keys(savedLinks).filter(key => fileName && key.includes(fileName));
+        let threadLinks = threadKeys.map(key => savedLinks[key]);
+
+        if (threadLinks.length === 0) {
+            showToast('No links found!', 4000);
+            return;
+        }
+
+        if (sortLinks) {
+            threadLinks = threadLinks.sort();
+        }
 
         if (selectedAction === 'copy') {
-            // Convert links array to string with chosen separator
-            let linksText = links.join(separator);
-            // Copy to clipboard
+            let linksText = threadLinks.join(separator);
             copyToClipboard(linksText);
         } else {
-            // Get the current URL and extract the base name after 'threads/'
-            const currentURL = window.location.href;
-            const baseNameMatch = currentURL.match(/threads\/([^\/]+)/); // Capture anything after 'threads/'
-            const fileName = baseNameMatch ? baseNameMatch[1] : 'extracted_links'; // Default name if not found
-
-            // Convert links array to string with line breaks
-            let linksText = links.join("\n");
-
+            let linksText = threadLinks.join("\n");
             // Create a Blob with the links
             let blob = new Blob([linksText], { type: 'text/plain' });
 
@@ -381,15 +356,9 @@
             document.body.appendChild(tempLink);
             tempLink.click();
             document.body.removeChild(tempLink);
-
             showToast('Links downloaded as file!');
-        }
-
-        // Save the new links to localStorage if enabled
-        if (useStorage) {
-            let updatedStoredUrls = storedUrls.concat(links);
-            saveStoredUrls(updatedStoredUrls);
         }
     });
 
-})();
+    updateLocalStorage();
+});
