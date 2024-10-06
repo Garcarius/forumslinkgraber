@@ -295,10 +295,21 @@
         });
     });
 
+    const selectors = {    
+        images: 'img[class*=bbImage]',
+        videos: 'video source',
+        iframe: 'iframe[class=saint-iframe]',
+        embeds: 'iframe',
+        attachments_block: 'section[class=message-attachments]',
+        attachments: 'a',
+        embeds2: 'span[data-s9e-mediaembed-iframe]'
+    };
+
+    const combinedSelector = Object.values(selectors).join(', ');
 
     function updateLocalStorage() {
         let links = [];
-        document.querySelectorAll('a[href], iframe[src]').forEach(link => {
+        document.querySelectorAll(combinedSelector).forEach(link => {
             let href = link.href || link.src; // Use 'href' for <a> and 'src' for <iframe>
 
             // Check if the link contains a redirect confirmation
@@ -351,7 +362,7 @@
         }
 
         const threadKeys = Object.keys(savedLinks).filter(key => fileName && key.includes(fileName));
-        console.log("found ${threadKeys.length} pages");
+        console.log(`found ${threadKeys.length} pages`);
         let threadLinks = Object.values(threadKeys.map(key => savedLinks[key])).flat();
         console.log(threadLinks);
 
