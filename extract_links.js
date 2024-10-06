@@ -25,8 +25,8 @@
         'adglare.net',
         'adtng',
         'chatsex.xxx',
+        'cambb.xxx',
         'comments',
-        'customers.addonslab.com',
         'customers.addonslab.com',
         'energizeio.com',
         'escortsaffair.com',
@@ -39,14 +39,16 @@
         'posts',
         'reddit.com',
         'simpcity.su',
-        'socialmediagirls.com',
+        'forums.socialmediagirls.com',
         'stylesfactory.pl',
         'theporndude.com',
         'thread',
         'tiktok.com',
+        'data:image/svg+xml',
         'xenforo.com',
         'xentr.net',
         'youtube.com',
+        'youtu.be',
         "google.com/chrome"];
     let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
@@ -328,7 +330,7 @@
             }
 
             if (href && href.includes('http')) {
-                let isValid = excludeTerms.every(term => !href.includes(term)) && siteTerms.every(term => !link.closest(term));
+                let isValid = (excludeTerms.every(term => !href.includes(term)) && siteTerms.every(term => !link.closest(term)) || href.includes('attachment')) ;
 
                 if (isValid) {
                     links.push(href);
