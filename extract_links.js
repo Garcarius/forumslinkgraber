@@ -16,10 +16,39 @@
     'use strict';
 
     const pageURL = window.location.href.split('#')[0];
-    const pathSegments = window.location.pathname.split('/');
+    const pathSegments = window.location.pathname.split('#')[0].split('/');
     const threadsIndex = pathSegments.indexOf("threads");
     const threadName = threadsIndex !== -1 && threadsIndex < pathSegments.length - 1 ? pathSegments[threadsIndex + 1] : "extracted_links";
     const threadPage = threadsIndex !== -1 && threadsIndex < pathSegments.length - 2 ? pathSegments[threadsIndex + 2] : "";
+    // Exclude unwanted links (badges, reactions, comments, posts, etc.)
+    let excludeTerms = [
+        'adglare.net',
+        'adtng',
+        'chatsex.xxx',
+        'comments',
+        'customers.addonslab.com',
+        'customers.addonslab.com',
+        'energizeio.com',
+        'escortsaffair.com',
+        'instagram.com',
+        'masturbate2gether.com',
+        'member',
+        'nudecams.xxx',
+        'onlyfans.com',
+        'porndiscounts.com',
+        'posts',
+        'reddit.com',
+        'simpcity.su',
+        'socialmediagirls.com',
+        'stylesfactory.pl',
+        'theporndude.com',
+        'thread',
+        'tiktok.com',
+        'xenforo.com',
+        'xentr.net',
+        'youtube.com',
+        "google.com/chrome"];
+    let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
     // Create a container for the button and options
     let container = document.createElement('div');
@@ -266,10 +295,21 @@
         });
     });
 
+    const selectors = {    
+        images: 'img[class*=bbImage]',
+        videos: 'video source',
+        iframe: 'iframe[class=saint-iframe]',
+        embeds: 'iframe',
+        attachments_block: 'section[class=message-attachments]',
+        attachments: 'a',
+        embeds2: 'span[data-s9e-mediaembed-iframe]'
+    };
+
+    const combinedSelector = Object.values(selectors).join(', ');
 
     function updateLocalStorage() {
         let links = [];
-        document.querySelectorAll('a[href], iframe[src]').forEach(link => {
+        document.querySelectorAll(combinedSelector).forEach(link => {
             let href = link.href || link.src; // Use 'href' for <a> and 'src' for <iframe>
 
             // Check if the link contains a redirect confirmation
@@ -286,13 +326,6 @@
                     console.error('Invalid URL format:', href);
                 }
             }
-
-            // Exclude unwanted links (badges, reactions, comments, posts, etc.)
-            let excludeTerms = ['thread', 'member', 'comments', 'posts', 'adglare.net',
-                'energizeio.com', 'theporndude.com', 'onlyfans.com', "google.com/chrome",
-                'instagram.com', 'reddit.com', 'tiktok.com', 'xenforo.com', 'xentr.net',
-                'socialmediagirls.com', 'youtube.com', 'simpcity.su', 'adtng'];
-            let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
             if (href && href.includes('http')) {
                 let isValid = excludeTerms.every(term => !href.includes(term)) && siteTerms.every(term => !link.closest(term));
@@ -329,7 +362,7 @@
         }
 
         const threadKeys = Object.keys(savedLinks).filter(key => fileName && key.includes(fileName));
-        console.log("found ${threadKeys.length} pages");
+        console.log(`found ${threadKeys.length} pages`);
         let threadLinks = Object.values(threadKeys.map(key => savedLinks[key])).flat();
         console.log(threadLinks);
 
