@@ -16,7 +16,7 @@
     'use strict';
 
     const pageURL = window.location.href.split('#')[0];
-    const pathSegments = window.location.pathname.split('/');
+    const pathSegments = window.location.pathname.split('#')[0].split('/');
     const threadsIndex = pathSegments.indexOf("threads");
     const threadName = threadsIndex !== -1 && threadsIndex < pathSegments.length - 1 ? pathSegments[threadsIndex + 1] : "extracted_links";
     const threadPage = threadsIndex !== -1 && threadsIndex < pathSegments.length - 2 ? pathSegments[threadsIndex + 2] : "";
@@ -288,10 +288,33 @@
             }
 
             // Exclude unwanted links (badges, reactions, comments, posts, etc.)
-            let excludeTerms = ['thread', 'member', 'comments', 'posts', 'adglare.net',
-                'energizeio.com', 'theporndude.com', 'onlyfans.com', "google.com/chrome",
-                'instagram.com', 'reddit.com', 'tiktok.com', 'xenforo.com', 'xentr.net',
-                'socialmediagirls.com', 'youtube.com', 'simpcity.su', 'adtng'];
+            let excludeTerms = [
+                'adglare.net',
+                'adtng',
+                'chatsex.xxx',
+                'comments',
+                'customers.addonslab.com',
+                'customers.addonslab.com',
+                'energizeio.com',
+                'escortsaffair.com',
+                'instagram.com',
+                'masturbate2gether.com',
+                'member',
+                'nudecams.xxx',
+                'onlyfans.com',
+                'porndiscounts.com',
+                'posts',
+                'reddit.com',
+                'simpcity.su',
+                'socialmediagirls.com',
+                'stylesfactory.pl',
+                'theporndude.com',
+                'thread',
+                'tiktok.com',
+                'xenforo.com',
+                'xentr.net',
+                'youtube.com',
+                "google.com/chrome"];
             let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
             if (href && href.includes('http')) {
