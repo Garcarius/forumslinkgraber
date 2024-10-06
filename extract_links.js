@@ -20,6 +20,35 @@
     const threadsIndex = pathSegments.indexOf("threads");
     const threadName = threadsIndex !== -1 && threadsIndex < pathSegments.length - 1 ? pathSegments[threadsIndex + 1] : "extracted_links";
     const threadPage = threadsIndex !== -1 && threadsIndex < pathSegments.length - 2 ? pathSegments[threadsIndex + 2] : "";
+    // Exclude unwanted links (badges, reactions, comments, posts, etc.)
+    let excludeTerms = [
+        'adglare.net',
+        'adtng',
+        'chatsex.xxx',
+        'comments',
+        'customers.addonslab.com',
+        'customers.addonslab.com',
+        'energizeio.com',
+        'escortsaffair.com',
+        'instagram.com',
+        'masturbate2gether.com',
+        'member',
+        'nudecams.xxx',
+        'onlyfans.com',
+        'porndiscounts.com',
+        'posts',
+        'reddit.com',
+        'simpcity.su',
+        'socialmediagirls.com',
+        'stylesfactory.pl',
+        'theporndude.com',
+        'thread',
+        'tiktok.com',
+        'xenforo.com',
+        'xentr.net',
+        'youtube.com',
+        "google.com/chrome"];
+    let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
     // Create a container for the button and options
     let container = document.createElement('div');
@@ -286,36 +315,6 @@
                     console.error('Invalid URL format:', href);
                 }
             }
-
-            // Exclude unwanted links (badges, reactions, comments, posts, etc.)
-            let excludeTerms = [
-                'adglare.net',
-                'adtng',
-                'chatsex.xxx',
-                'comments',
-                'customers.addonslab.com',
-                'customers.addonslab.com',
-                'energizeio.com',
-                'escortsaffair.com',
-                'instagram.com',
-                'masturbate2gether.com',
-                'member',
-                'nudecams.xxx',
-                'onlyfans.com',
-                'porndiscounts.com',
-                'posts',
-                'reddit.com',
-                'simpcity.su',
-                'socialmediagirls.com',
-                'stylesfactory.pl',
-                'theporndude.com',
-                'thread',
-                'tiktok.com',
-                'xenforo.com',
-                'xentr.net',
-                'youtube.com',
-                "google.com/chrome"];
-            let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
 
             if (href && href.includes('http')) {
                 let isValid = excludeTerms.every(term => !href.includes(term)) && siteTerms.every(term => !link.closest(term));
