@@ -1,403 +1,208 @@
 // ==UserScript==
-// @name         Extract All Posted Links
+// @name         Extract All Posted Links (v3.1 - Embed Video Support)
 // @namespace    http://tampermonkey.net/
-// @version      2.3
-// @updateURL    https://github.com/Garcarius/forumslinkgraber/raw/main/extract_links_mf.js
-// @downloadURL  https://github.com/Garcarius/forumslinkgraber/raw/main/extract_links_mf.js
-// @description  Adds a button to extract all posted links (ignoring unwanted ones) and handles redirects. Now includes options to download or copy links to clipboard, with enhanced UI and local storage support to avoid duplicates.
-// @author       Garcarius, neolith, NTFSvolume
-// @match        https://simpcity.su/threads/*
-// @match        https://forums.socialmediagirls.com/threads/*
-// @grant        none
-// @run-at       document-idle   // Wait until the page is fully loaded
+// @version      3.1
+// @description  Extrae links, decodifica SimpCity/SMG y captura videos incrustados (iframes/embeds).
+// @match        *://forums.socialmediagirls.com/threads/*
+// @match        *://*.simpcity.su/threads/*
+// @match        *://*.simpcity.cr/threads/*
+// @match        *://xbunker.cc/threads/*
+// @match        *://leakedmodels.com/forum/threads/*
+// @match        *://nudostar.com/forum/threads/*
+// @match        *://titsintops.com/phpBB2/threads/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_deleteValue
+// @run-at       document-idle
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    const pageURL = window.location.href.split('#')[0];
-    const pathSegments = window.location.pathname.split('#')[0].split('/');
-    const threadsIndex = pathSegments.indexOf("threads");
-    const threadName = threadsIndex !== -1 && threadsIndex < pathSegments.length - 1 ? pathSegments[threadsIndex + 1] : "extracted_links";
-    const threadPage = threadsIndex !== -1 && threadsIndex < pathSegments.length - 2 ? pathSegments[threadsIndex + 2] : "";
-    // Exclude unwanted links (badges, reactions, comments, posts, etc.)
-    let excludeTerms = [
-        'adglare.net',
-        'adtng',
-        'chatsex.xxx',
-        'cambb.xxx',
-        'comments',
-        'customers.addonslab.com',
-        'energizeio.com',
-        'escortsaffair.com',
-        'instagram.com',
-        'masturbate2gether.com',
-        'member',
-        'nudecams.xxx',
-        'onlyfans.com',
-        'porndiscounts.com',
-        'posts',
-        'reddit.com',
-        'simpcity.su',
-        'forums.socialmediagirls.com',
-        'stylesfactory.pl',
-        'theporndude.com',
-        'thread',
-        'tiktok.com',
-        'data:image/svg+xml',
-        'xenforo.com',
-        'xentr.net',
-        'youtube.com',
-        'youtu.be',
-        "google.com/chrome"];
-    let siteTerms = ['.badge', '.reaction', '.bookmark', '.comment'];
+    const CONFIG = {
+        excludeTerms: [
+            '/styles/', '/smilies/', '/avatars/', 'Pepe', 'emotes', 'attachments/thumbnails',
+            'goto/comment', 'goto/post', '/search/', '/members/', 'register', 'login',
+            'help/', 'terms/', 'privacy/', 'whats-new', 'adglare.net', 'adtng', 'chatsex.xxx',
+            'abs.twimg.com', 'favicon', 'cdn.jsdelivr.net', '7tv.app', 'stylesfactory.pl',
+            'xenforo.com', 'logo', 'misc/', 'svg+xml', 'google.com', 'thread-loader',
+            'css', 'js', 'analytics', 'facebook.com', 'twitter.com'
+        ],
 
-    // Create a container for the button and options
-    let container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.top = '10px';
-    container.style.right = '10px';
-    container.style.zIndex = 1000;
-    container.style.padding = '15px';
-    container.style.backgroundColor = 'rgba(64, 181, 200, 0.95)';
-    container.style.borderRadius = '8px';
-    container.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
-    container.style.color = 'white';
-    container.style.fontFamily = 'Arial, sans-serif';
-    container.style.fontSize = '14px';
-    container.style.width = '300px'; // Increased width from 250px to 300px
+        disallowedExactURLs: [
+            'https://simpcity.su/', 'https://simpcity.cr/', 'https://nudostar.com/',
+            'https://forums.socialmediagirls.com/', 'https://liveporncams.xxx/',
+            'https://fansly.com/assets/images/twitter-card-image.png',
+            'https://pixeldrain.com/res/img/pixeldrain_32.png', 'https://chatsex.xxx/',
+            'https://static-eu-cdn.eporner.com/favicon.png', 'https://mega.nz/rich-folder.png'
+        ],
 
-    // Create the Extract Links button
-    let button = document.createElement('button');
-    button.innerHTML = 'Extract Links';
-    button.style.padding = '10px 15px';
-    button.style.backgroundColor = '#40b5c8';
-    button.style.color = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '5px';
-    button.style.cursor = 'pointer';
-    button.style.marginBottom = '15px';
-    button.style.width = '100%';
-    button.style.fontSize = '14px';
-    button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
-    button.style.transition = 'background-color 0.3s ease';
+        ignorePasswords: ['protection', 'link', 'required', 'yes', 'none', 'hidden', 'click'],
 
-    // Button hover effect
-    button.addEventListener('mouseover', () => {
-        button.style.backgroundColor = '#2a9aa3';
-    });
-    button.addEventListener('mouseout', () => {
-        button.style.backgroundColor = '#40b5c8';
-    });
-
-    // Create the option container
-    let optionsContainer = document.createElement('div');
-    optionsContainer.style.display = 'flex';
-    optionsContainer.style.flexDirection = 'column';
-    optionsContainer.style.gap = '5px';
-
-    // Function to create individual option rows
-    function createOptionRow(content) {
-        let row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.alignItems = 'center';
-        row.style.gap = '5px'; // Increased gap for better spacing
-        return row;
-    }
-
-    // Create the radio buttons for action selection
-    let actionRow = createOptionRow();
-
-    let downloadOption = document.createElement('input');
-    downloadOption.type = 'radio';
-    downloadOption.id = 'action-download';
-    downloadOption.name = 'extract-action';
-    downloadOption.value = 'download';
-    downloadOption.checked = true;
-
-    let downloadLabel = document.createElement('label');
-    downloadLabel.htmlFor = 'action-download';
-    downloadLabel.textContent = 'Download as file';
-    downloadLabel.style.cursor = 'pointer';
-    downloadLabel.style.whiteSpace = 'nowrap';
-    downloadLabel.style.flexBasis = '120px';
-
-    let copyOption = document.createElement('input');
-    copyOption.type = 'radio';
-    copyOption.id = 'action-copy';
-    copyOption.name = 'extract-action';
-    copyOption.value = 'copy';
-
-
-    let copyLabel = document.createElement('label');
-    copyLabel.htmlFor = 'action-copy';
-    copyLabel.textContent = 'Copy to clipboard';
-    copyLabel.style.cursor = 'pointer';
-    copyLabel.style.whiteSpace = 'nowrap';
-
-    // Append radio buttons and labels to the action row
-    actionRow.appendChild(downloadOption);
-    actionRow.appendChild(downloadLabel);
-    actionRow.appendChild(copyOption);
-    actionRow.appendChild(copyLabel);
-
-    let optionsRow = createOptionRow();
-
-    let onlyCurrentPageCheckbox = document.createElement('input');
-    onlyCurrentPageCheckbox.type = 'checkbox';
-    onlyCurrentPageCheckbox.id = 'only-current-page';
-    onlyCurrentPageCheckbox.name = 'only-current-page';
-    onlyCurrentPageCheckbox.checked = false;
-
-    let onlyCurrentPageLabel = document.createElement('label');
-    onlyCurrentPageLabel.htmlFor = 'only-current-page';
-    onlyCurrentPageLabel.textContent = 'Only Current Page';
-    onlyCurrentPageLabel.style.cursor = 'pointer';
-    onlyCurrentPageLabel.style.whiteSpace = 'nowrap';
-    onlyCurrentPageLabel.style.flexBasis = '120px';
-
-    let sortLinksCheckbox = document.createElement('input');
-    sortLinksCheckbox.type = 'checkbox';
-    sortLinksCheckbox.id = 'sort-links';
-    sortLinksCheckbox.name = 'sort-links';
-    sortLinksCheckbox.checked = true; // Defaults to sort links
-
-    let sortLinksLabel = document.createElement('label');
-    sortLinksLabel.htmlFor = 'sort-links';
-    sortLinksLabel.textContent = 'Sort Links';
-    sortLinksLabel.style.cursor = 'pointer';
-    sortLinksLabel.style.whiteSpace = 'nowrap';
-
-    optionsRow.appendChild(onlyCurrentPageCheckbox);
-    optionsRow.appendChild(onlyCurrentPageLabel);
-    optionsRow.appendChild(sortLinksCheckbox);
-    optionsRow.appendChild(sortLinksLabel);
-
-    let separatorRow = createOptionRow();
-    separatorRow.style.display = 'none';
-
-    let separatorLabel = document.createElement('label');
-    separatorLabel.textContent = 'Separator:';
-    separatorLabel.style.flex = '0 0 auto';
-    separatorLabel.style.whiteSpace = 'nowrap';
-
-    let separatorSelect = document.createElement('select');
-    separatorSelect.id = 'separator-select';
-    separatorSelect.style.flex = '1';
-
-    let optionSpace = document.createElement('option');
-    optionSpace.value = ' ';
-    optionSpace.textContent = 'Space';
-
-    let optionNewline = document.createElement('option');
-    optionNewline.value = '\n';
-    optionNewline.textContent = 'New Line';
-
-    separatorSelect.appendChild(optionNewline);
-    separatorSelect.appendChild(optionSpace);
-    separatorSelect.value = '\n'
-
-    separatorRow.appendChild(separatorLabel);
-    separatorRow.appendChild(separatorSelect);
-
-    optionsContainer.appendChild(actionRow);
-    optionsContainer.appendChild(optionsRow);
-    optionsContainer.appendChild(separatorRow);
-
-    container.appendChild(button);
-    container.appendChild(optionsContainer);
-
-    document.body.appendChild(container);
-
-    let navBar = document.querySelector('.p-nav');
-
-    // Function to position the button below the navBar
-    function positionButtonBelowNavBar() {
-        let navBarHeight = navBar.offsetHeight;
-        let navBarTop = navBar.getBoundingClientRect().top;
-        container.style.top = (navBarTop + navBarHeight + 10) + 'px'; // 10px margin below the navBar
-    }
-
-    positionButtonBelowNavBar();
-
-    window.addEventListener('resize', positionButtonBelowNavBar);
-    window.addEventListener('scroll', positionButtonBelowNavBar);
-
-    // Create the toast notification container
-    let toastContainer = document.createElement('div');
-    toastContainer.id = 'toast-container';
-    toastContainer.style.position = 'fixed';
-    toastContainer.style.bottom = '20px';
-    toastContainer.style.right = '20px';
-    toastContainer.style.zIndex = 1001;
-    toastContainer.style.display = 'flex';
-    toastContainer.style.flexDirection = 'column';
-    toastContainer.style.gap = '10px';
-    document.body.appendChild(toastContainer);
-
-    // Function to show toast notifications
-    function showToast(message, duration = 3000) {
-        let toast = document.createElement('div');
-        toast.textContent = message;
-        toast.style.backgroundColor = 'rgba(0,0,0,0.8)';
-        toast.style.color = 'white';
-        toast.style.padding = '10px 20px';
-        toast.style.borderRadius = '5px';
-        toast.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.5s ease';
-        toast.style.fontSize = '14px';
-        toast.style.maxWidth = '300px';
-
-        toastContainer.appendChild(toast);
-
-        // Trigger reflow to enable transition
-        void toast.offsetWidth;
-        toast.style.opacity = '1';
-
-        // Remove the toast after the specified duration
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.addEventListener('transitionend', () => {
-                toast.remove();
-            });
-        }, duration);
-    }
-
-    // Function to decode Base64 encoded URLs
-    function decodeBase64Url(base64String) {
-        try {
-            return decodeURIComponent(atob(base64String).split('').map(function (c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-        } catch (e) {
-            console.error('Error decoding Base64 URL:', e);
-            return null;
-        }
-    }
-
-    // Function to copy text to clipboard
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(function () {
-            showToast('Links copied to clipboard!');
-        }, function (err) {
-            console.error('Could not copy text: ', err);
-            showToast('Failed to copy links to clipboard.', 5000);
-        });
-    }
-
-    // Event listener to toggle separator selection visibility
-    document.querySelectorAll('input[name="extract-action"]').forEach(radio => {
-        radio.addEventListener('change', function () {
-            if (copyOption.checked) {
-                separatorRow.style.display = 'flex';
-            } else {
-                separatorRow.style.display = 'none';
-            }
-        });
-    });
-
-    const selectors = {    
-        images: 'img[class*=bbImage]',
-        videos: 'video source',
-        iframe: 'iframe[class=saint-iframe]',
-        embeds: 'iframe',
-        attachments_block: 'section[class=message-attachments]',
-        attachments: 'a',
-        embeds2: 'span[data-s9e-mediaembed-iframe]'
+        waitBetweenPages: 2.5
     };
 
-    const combinedSelector = Object.values(selectors).join(', ');
+    const passRegex = /\b(?:pass|password|pw|contraseña)[:\-\s]+([a-zA-Z0-9._!@#]+)/i;
 
-    function updateLocalStorage() {
-        let links = [];
-        document.querySelectorAll(combinedSelector).forEach(link => {
-            let href = link.href || link.src; // Use 'href' for <a> and 'src' for <iframe>
+    function cleanAndDecode(url) {
+        if (!url) return null;
+        let finalUrl = url;
 
-            // Check if the link contains a redirect confirmation
-            if (href && href.includes('goto/link-confirmation?url=')) {
-                // Extract and decode the actual URL from the Base64-encoded parameter
-                try {
-                    const urlObj = new URL(href);
-                    const encodedUrl = urlObj.searchParams.get('url');
-                    const decodedUrl = decodeBase64Url(encodedUrl);
-                    if (decodedUrl) {
-                        href = decodedUrl; // Use the decoded URL
-                    }
-                } catch (e) {
-                    console.error('Invalid URL format:', href);
-                }
+        if (finalUrl.includes('redirect/?to=')) {
+            const match = finalUrl.match(/to=([^&]+)/);
+            if (match) {
+                try { finalUrl = atob(decodeURIComponent(match[1])); } catch (e) { }
             }
-
-            if (href && href.includes('http')) {
-                let isValid = (excludeTerms.every(term => !href.includes(term)) && siteTerms.every(term => !link.closest(term)) || href.includes('attachment')) ;
-
-                if (isValid) {
-                    links.push(href);
-                }
+        } else if (finalUrl.includes('link-confirmation?url=')) {
+            const match = finalUrl.match(/url=([^&]+)/);
+            if (match) {
+                try { finalUrl = atob(decodeURIComponent(match[1])); } catch (e) { }
             }
-        });
+        }
 
-        // Remove duplicate links
-        links = [...new Set(links)];
+        finalUrl = finalUrl.split(/[ "\s<>']+/)[0];
+        finalUrl = finalUrl.split('&s=')[0].split('?s=')[0].split('&amp;s=')[0];
+        if (finalUrl.includes('#lg=')) finalUrl = finalUrl.split('#')[0];
 
-        let savedLinks = JSON.parse(localStorage.getItem('saved_links')) || {};
-        savedLinks[pageURL] = links;
-
-        localStorage.setItem('saved_links', JSON.stringify(savedLinks));
-        console.log(`Stored ${links.length} links from page: ${pageURL}`);
-        console.log('Updated saved_links:', savedLinks);
+        return finalUrl;
     }
 
-    // Event listener for button click
-    button.addEventListener('click', function () {
-        let savedLinks = JSON.parse(localStorage.getItem('saved_links')) || {};
-        // Determine the selected action
-        let selectedAction = document.querySelector('input[name="extract-action"]:checked').value;
-        let separator = separatorSelect.value;
-        let sortLinks = sortLinksCheckbox.checked
-        let onlyCurrentPage = onlyCurrentPageCheckbox.checked;
-        let fileName = threadName
+    function isValuable(url) {
+        if (!url || !url.startsWith('http')) return false;
+        const lowerUrl = url.toLowerCase();
+        if (CONFIG.excludeTerms.some(term => lowerUrl.includes(term.toLowerCase()))) return false;
+        if (CONFIG.disallowedExactURLs.some(exact => url === exact)) return false;
+        return true;
+    }
 
-        if (onlyCurrentPage) {
-            fileName = threadName.concat("/", threadPage);
+    function getCleanModelName() {
+        const match = location.href.match(/threads\/([^\/]+)|thread\/([^\/]+)/);
+        if (match) {
+            let slug = (match[1] || match[2]).split('.')[0];
+            return decodeURIComponent(slug).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9-_]/g, "_");
         }
+        return 'extracted_links';
+    }
 
-        const threadKeys = Object.keys(savedLinks).filter(key => fileName && key.includes(fileName));
-        console.log(`found ${threadKeys.length} pages`);
-        let threadLinks = Object.values(threadKeys.map(key => savedLinks[key])).flat();
-        console.log(threadLinks);
+    function getCurrentPageNumber() {
+        const match = location.href.match(/[?&]page=(\d+)|\/page-(\d+)/);
+        if (match) return parseInt(match[1] || match[2]);
+        return 1;
+    }
 
-        if (threadLinks.length === 0) {
-            showToast('No links found!', 4000);
-            return;
-        }
+    // --- UI ---
+    const container = document.createElement('div');
+    Object.assign(container.style, {
+        position: 'fixed', top: '100px', right: '20px', zIndex: 9999,
+        display: 'flex', flexDirection: 'column', gap: '8px',
+        backgroundColor: '#1a1a1a', padding: '12px', borderRadius: '8px',
+        border: '2px solid #ffcc00', boxShadow: '0px 0px 15px rgba(255, 204, 0, 0.5)'
+    });
+    document.body.appendChild(container);
 
-        // Remove duplicate links accross multiple pages
-        threadLinks = [...new Set(threadLinks)];
+    const btnBulk = document.createElement('button');
+    btnBulk.textContent = GM_getValue('is_extracting', false) ? 'RUNNING...' : 'START EXTRACTION';
+    Object.assign(btnBulk.style, {
+        padding: '12px', backgroundColor: '#ffcc00', color: 'black',
+        fontWeight: 'bold', border: 'none', borderRadius: '5px', cursor: 'pointer'
+    });
+    container.appendChild(btnBulk);
 
-        if (sortLinks) {
-            threadLinks = threadLinks.sort();
-        }
+    const btnReset = document.createElement('button');
+    btnReset.textContent = 'Reset Session';
+    Object.assign(btnReset.style, {
+        padding: '6px', backgroundColor: '#444', color: 'white',
+        border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '11px'
+    });
+    container.appendChild(btnReset);
 
-        if (selectedAction === 'copy') {
-            let linksText = threadLinks.join(separator);
-            copyToClipboard(linksText);
+    // --- PROCESO ---
+    function extractCurrentPage() {
+        const foundLinks = new Set();
+        const baseDomain = window.location.origin;
+
+        document.querySelectorAll('.bbWrapper, .message-attachments, .attachmentList').forEach(post => {
+            const passMatch = post.innerText.match(passRegex);
+            let foundPassword = null;
+
+            if (passMatch) {
+                const potentialPass = passMatch[1].trim();
+                if (!CONFIG.ignorePasswords.includes(potentialPass.toLowerCase())) {
+                    foundPassword = potentialPass;
+                }
+            }
+
+            post.querySelectorAll('a, img, source, video, iframe, [data-s9e-mediaembed-src]').forEach(el => {
+                let rawUrl = el.href ||
+                             el.src ||
+                             el.getAttribute('data-url') ||
+                             el.getAttribute('data-src') ||
+                             el.getAttribute('data-s9e-mediaembed-src');
+
+                if (!rawUrl || rawUrl.startsWith('data:')) return;
+                if (rawUrl.startsWith('/')) rawUrl = baseDomain + rawUrl;
+
+                let cleanUrl = cleanAndDecode(rawUrl);
+
+                if (isValuable(cleanUrl)) {
+                    if (foundPassword && !cleanUrl.includes(baseDomain) && !cleanUrl.includes('password=')) {
+                        const sep = cleanUrl.includes('?') ? '&' : '?';
+                        cleanUrl = `${cleanUrl}${sep}password=${foundPassword}`;
+                    }
+                    foundLinks.add(cleanUrl);
+                }
+            });
+        });
+        return Array.from(foundLinks);
+    }
+
+    function processPage() {
+        if (!GM_getValue('is_extracting', false)) return;
+
+        let currentLinks = GM_getValue('session_links', []);
+        const newLinks = extractCurrentPage();
+        const combined = [...new Set([...currentLinks, ...newLinks])];
+        GM_setValue('session_links', combined);
+
+        const nextButton = document.querySelector('a.pageNav-jump--next, a[rel="next"], .pageNav-main .pageNav-page--next + a');
+        if (nextButton && nextButton.href !== location.href) {
+            btnBulk.textContent = `Página Sig... (${combined.length} links)`;
+            setTimeout(() => nextButton.click(), CONFIG.waitBetweenPages * 1000);
         } else {
-            let linksText = threadLinks.join("\n");
-            // Create a Blob with the links
-            let blob = new Blob([linksText], { type: 'text/plain' });
+            // *** ÚNICA MODIFICACIÓN: header con última página ***
+            const lastPage = getCurrentPageNumber();
+            const timestamp = new Date().toLocaleString();
+            const header = `# Ultima pagina extraida: ${lastPage} | Total links: ${combined.length} | Fecha: ${timestamp}`;
+            const content = header + '\n' + combined.join('\n');
 
-            // Create a temporary link to trigger the download
-            let tempLink = document.createElement('a');
+            const cleanName = getCleanModelName();
+            const blob = new Blob([content], { type: 'text/plain' });
+            const tempLink = document.createElement('a');
             tempLink.href = URL.createObjectURL(blob);
-            tempLink.download = `${fileName}.txt`;
-            document.body.appendChild(tempLink);
+            tempLink.download = `${cleanName}.txt`;
             tempLink.click();
-            document.body.removeChild(tempLink);
-            showToast('Links downloaded as file!');
+
+            GM_deleteValue('session_links');
+            GM_deleteValue('is_extracting');
+            alert(`COMPLETO: ${combined.length} enlaces. Última página: ${lastPage}`);
+            location.reload();
         }
+    }
+
+    btnBulk.addEventListener('click', () => {
+        GM_setValue('is_extracting', true);
+        GM_setValue('session_links', []);
+        processPage();
     });
 
-    updateLocalStorage();
+    btnReset.addEventListener('click', () => {
+        GM_deleteValue('is_extracting');
+        GM_deleteValue('session_links');
+        alert("Sesión reseteada.");
+        location.reload();
+    });
+
+    if (GM_getValue('is_extracting', false)) {
+        setTimeout(processPage, 2000);
+    }
 })();
